@@ -12,4 +12,3 @@ connection = pymysql.connect(
     cursorclass=pymysql.cursors.DictCursor
 )
 
-connection.close()

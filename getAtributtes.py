@@ -32,8 +32,17 @@ def getQuantity(soup):
         return resultQuantity
     return 1
 
+def getRating(soup):
+    containerRating = soup.find('div',{'class':'ui-pdp-header__info'})
+    if (containerRating):
+        totalRating = containerRating.find('span',{'class':'ui-pdp-review__amount'}).text
+        resultRating = totalRating.replace('(','').replace(')','')
+        return int(resultRating)
+    return 0
+    
+
 class Product:
-    def __init__(self,title,subtitle,description,price,descriptionContent,images,offer,quantity):
+    def __init__(self,title,subtitle,description,price,descriptionContent,images,offer,quantity,rating):
         self.title = title
         self.subtitle = subtitle
         self.description = description
@@ -42,6 +51,7 @@ class Product:
         self.images = list(images)
         self.offer = int(offer)
         self.quantity = int(quantity)
+        self.rating = int(rating)
         
     def __str__(self) -> str:
         return f'Title: {self.title}, Subtitle: {self.subtitle}, Description: {self.description}, Price: {self.price}, Description Content: {self.descriptionContent}, Images: {self.images}'
@@ -60,29 +70,26 @@ def getAtributtes(http):
         description = getDescription(soup)
         offer = getOffer(soup)
         quantity = getQuantity(soup)
-        if offer:
-            print(http)
-            print(f'Price:{price} Offer:{offer}')
-        product = Product(title,subtitle,description,price,descriptionContent,images,offer,quantity)
-        newProduct = (product.title,product.subtitle,product.description,product.price,product.descriptionContent,product.offer,product.quantity)
-       
+        rating = getRating(soup)
+        product = Product(title,subtitle,description,price,descriptionContent,images,offer,quantity,rating)
+        newProduct = (product.title,product.subtitle,product.description,product.price,product.descriptionContent,product.offer,product.quantity,product.rating)
         try:
             with connection.cursor() as cursor:
-                insertProduct = "INSERT INTO products (title, subtitle, description, price, descriptionContent, offer, quantity) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+                insertProduct = "INSERT INTO products (title, subtitle, description, price, descriptionContent, offer, quantity, rating) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
                 cursor.execute(insertProduct,newProduct)
                 connection.commit()
                 idProduct = cursor.lastrowid
                 images = []
                 for image in product.images:
                     images.append((idProduct,image))
-                insertImage = "INSERT INTO images (id,image) VALUES (%s,%s)"
+                insertImage = "INSERT INTO images (idProduct,image) VALUES (%s,%s)"
                 cursor.executemany(insertImage,images)
                 print('Producto añadido con exito!')
                 connection.commit()
         except Exception as e:
-            print(e)
+            print('No se ha podido subir el producto a la base de datos')
     except Exception as e:
-        print(f'ERROR: {e} HTTP: {http}')
+        print(f'No se ha podido encontrar atributos esenciales en la ruta: {http}')
 
 with open('urls.txt', 'r') as f:
     for line in f:
