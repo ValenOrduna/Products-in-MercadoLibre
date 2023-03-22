@@ -39,10 +39,16 @@ def getRating(soup):
         resultRating = totalRating.replace('(','').replace(')','')
         return int(resultRating)
     return 0
-    
+
+def getCategory(soup):
+    containerCategory = soup.find('a',{'class':'andes-breadcrumb__link'})
+    if containerCategory:
+        return containerCategory.text
+    else:
+        return None
 
 class Product:
-    def __init__(self,title,subtitle,description,price,descriptionContent,images,offer,quantity,rating):
+    def __init__(self,title,subtitle,description,price,descriptionContent,images,offer,quantity,rating,category):
         self.title = title
         self.subtitle = subtitle
         self.description = description
@@ -52,6 +58,7 @@ class Product:
         self.offer = int(offer)
         self.quantity = int(quantity)
         self.rating = int(rating)
+        self.category = category
         
     def __str__(self) -> str:
         return f'Title: {self.title}, Subtitle: {self.subtitle}, Description: {self.description}, Price: {self.price}, Description Content: {self.descriptionContent}, Images: {self.images}'
@@ -71,11 +78,12 @@ def getAtributtes(http):
         offer = getOffer(soup)
         quantity = getQuantity(soup)
         rating = getRating(soup)
-        product = Product(title,subtitle,description,price,descriptionContent,images,offer,quantity,rating)
-        newProduct = (product.title,product.subtitle,product.description,product.price,product.descriptionContent,product.offer,product.quantity,product.rating)
+        category = getCategory(soup)
+        product = Product(title,subtitle,description,price,descriptionContent,images,offer,quantity,rating,category)
+        newProduct = (product.title,product.subtitle,product.description,product.price,product.descriptionContent,product.offer,product.quantity,product.rating,product.category)
         try:
             with connection.cursor() as cursor:
-                insertProduct = "INSERT INTO products (title, subtitle, description, price, descriptionContent, offer, quantity, rating) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
+                insertProduct = "INSERT INTO products (title, subtitle, description, price, descriptionContent, offer, quantity, rating, category) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 cursor.execute(insertProduct,newProduct)
                 connection.commit()
                 idProduct = cursor.lastrowid
